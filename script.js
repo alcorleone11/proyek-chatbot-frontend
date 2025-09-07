@@ -5,6 +5,10 @@ const chatForm = document.getElementById('chatForm');
 const userInput = document.getElementById('userInput');
 const chatMessages = document.getElementById('chatMessages');
 
+// --- GANTI URL INI DENGAN URL RENDER ANDA ---
+const BACKEND_URL = "https://gunadarma-chatbot-api.onrender.com/chat"; 
+// Pastikan diakhiri dengan /chat
+
 // Fungsi untuk membuat atau mendapatkan Session ID dari browser
 function getSessionId() {
     let sessionId = localStorage.getItem('chatbot_session_id');
@@ -35,8 +39,6 @@ chatForm.addEventListener('submit', (event) => {
 function addMessage(sender, text) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
-    // --- PERUBAHAN ---
-    // Menggunakan innerHTML agar bisa merender tag <br> dan <iframe>
     messageElement.innerHTML = text;
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -47,7 +49,7 @@ async function sendMessageToBot(message) {
     addMessage('bot', '...'); // Indikator loading
     const sessionId = getSessionId();
     try {
-        const response = await fetch('https://chatbot-gunadarma.netlify.app/.netlify/functions/proxy', {
+        const response = await fetch(BACKEND_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -57,27 +59,30 @@ async function sendMessageToBot(message) {
                 session_id: sessionId
             })
         });
-        // Hapus indikator loading
+
         if (chatMessages.lastChild && chatMessages.lastChild.innerText === '...') {
             chatMessages.removeChild(chatMessages.lastChild);
         }
+
         if (!response.ok) {
-            addMessage('bot', 'Maaf, server sedang bermasalah.');
+            // Menangkap error 404 atau 500
+            addMessage('bot', 'Maaf, server sedang bermasalah atau tidak dapat dijangkau.');
             return;
         }
+
         const data = await response.json();
         addMessage('bot', data.response);
+
     } catch (error) {
         if (chatMessages.lastChild && chatMessages.lastChild.innerText === '...') {
             chatMessages.removeChild(chatMessages.lastChild);
         }
         console.error('Error:', error);
-        addMessage('bot', 'Tidak dapat terhubung ke server. Pastikan server backend sudah berjalan.');
+        addMessage('bot', 'Gagal terhubung ke server. Periksa koneksi internet atau URL backend.');
     }
 }
 
-// --- PERUBAHAN ---
-// Menambahkan pesan selamat datang dari bot dengan format HTML (<br>)
+// Menambahkan pesan selamat datang dari bot
 window.addEventListener('load', () => {
     addMessage('bot', `Halo! 👋 Selamat datang di Chatbot Informasi Universitas Gunadarma.<br><br>
 Saya bisa bantu menjawab pertanyaan seperti:<br>
